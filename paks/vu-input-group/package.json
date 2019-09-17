@@ -1,0 +1,9 @@
+{
+    "name": "vu-input-group",
+    "version": "1.0.0",
+    "main": "VuInputGroup.vue",
+    "repository": "https://github.com/sensedeep/vu-input-group.git",
+    "dependencies": {
+        "vu-input": "~1"
+    }
+}

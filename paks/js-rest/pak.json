@@ -1,0 +1,10 @@
+{
+    "name": "js-rest",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "https://github.com/sensedeep/js-rest.git",
+    "origin": "sensedeep/js-rest",
+    "dependencies": {
+        "js-net": "~1"
+    }
+}

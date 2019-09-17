@@ -1,0 +1,6 @@
+{
+    "name": "vu-input",
+    "version": "1.0.0",
+    "main": "VuInput.vue",
+    "repository": "https://github.com/sensedeep/vu-input.git"
+}

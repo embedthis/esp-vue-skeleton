@@ -1,0 +1,77 @@
+{
+    "name": "esp-vue-skeleton",
+    "description": "ESP VueJS Application Skeleton",
+    "version": "1.0.0",
+    "licenses": [
+        {
+            "type": "GPL",
+            "url": "http://www.gnu.org/licenses/gpl-2.0.html"
+        },
+        {
+            "type": "Commercial",
+            "url": "https://embedthis.com/licensing/"
+        }
+    ],
+    "dependencies": {
+        "js-polyfill": "~1",
+        "js-net": "~1",
+        "js-rest": "~1",
+        "js-json": "~1",
+        "vu-input-group": "~1"
+    },
+    "devDependencies": {
+        "pak": ">=1.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/embedthis/esp-vue-skeleton.git"
+    },
+    "ignore": [
+        "start.me"
+    ],
+    "blend": {
+        "devDependencies": {
+            "?esp": ">=8"
+        },
+        "directories": {
+            "?contents": "ui/src",
+            "?controllers": "controllers"
+        },
+        "?profile": "debug",
+        "?import": true
+    },
+    "export": [
+        {
+            "from": [
+                "contents/**"
+            ],
+            "to": "${TOP}/ui/",
+            "trim": 1,
+            "overwrite": false
+        },
+        {
+            "from": [
+                "src/app.c"
+            ],
+            "to": "${TOP}",
+            "overwrite": false
+        },
+        {
+            "from": [
+                "Makefile",
+                "postcss.config.js"
+            ],
+            "to": "${TOP}",
+            "overwrite": false
+        }
+    ],
+    "manage": [
+        "esp.json"
+    ],
+    "scripts": {
+        "install": {
+            "run": "[ ! -x paks/esp-vue-skeleton ] && (esp generate module ; make configure build >/dev/tty 2>&1) ; true"
+        }
+    },
+    "profile": "dev"
+}

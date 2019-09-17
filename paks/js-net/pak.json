@@ -1,0 +1,8 @@
+{
+    "name": "js-net",
+    "version": "1.0.0",
+    "repository": "https://github.com/sensedeep/js-net.git",
+    "license": "UNLICENSED",
+    "main": "index.js",
+    "origin": "sensedeep/js-net"
+}
