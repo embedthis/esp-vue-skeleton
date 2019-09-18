@@ -13,6 +13,7 @@ import routes from './routes.js'
 import VuFeedback from 'vu-feedback'
 import VuInput from 'vu-input'
 import VuInputGroup from 'vu-input-group'
+import VuValidate from 'vu-validate'
 
 Vue.config.productionTip = false
 Net.setConfig(netCallback, {prefix: "http://127.0.0.1:8000/api"})
@@ -21,6 +22,7 @@ Vue.use(Router)
 Vue.component('vu-feedback', VuFeedback)
 Vue.component('vu-input', VuInput)
 Vue.component('vu-input-group', VuInputGroup)
+Vue.component('vu-validate', VuValidate)
 
 const router = new Router({
     mode: 'history',

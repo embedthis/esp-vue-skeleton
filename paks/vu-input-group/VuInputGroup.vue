@@ -5,18 +5,20 @@
 -->
 <template>
     <div class="vu-input-group">
-        <vu-input v-for="item in items" :key="item.name" :dataType="item.dataType" :name="item.name" :label="item.label" v-model="value[item.name]" />
+        <vu-input v-for="item in items" :key="item.name" :dataType="item.dataType" :name="item.name" :label="item.label" v-model="value[item.name]" :rules="rules[item.name]" />
     </div>
 </template>
 
 <script>
 import {Vue, Component, Prop, Watch} from 'vue-property-decorator'
 import VuInput from 'vu-input'
+import VuValidate from 'vu-validate'
 
-@Component({components: {VuInput}})
+@Component({components: {VuInput, VuValidate}})
 export default class VuInputGroup extends Vue {
     @Prop() fields
     @Prop() labels
+    @Prop({default: () => (VuValidate.Rules)}) rules
     @Prop() schema
     @Prop() value
 
@@ -70,7 +72,7 @@ export default class VuInputGroup extends Vue {
         }
     }
 
-    @Watch('value')
+    @Watch('value', {immediate: true})
     valueChanged() {
         this.setup()
     }

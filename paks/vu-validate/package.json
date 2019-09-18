@@ -1,0 +1,6 @@
+{
+    "name": "vu-validate",
+    "version": "1.0.0",
+    "main": "VuValidate.vue",
+    "repository": "https://github.com/sensedeep/vu-validate.git"
+}

@@ -1,0 +1,6 @@
+{
+    "name": "vu-feedback",
+    "version": "1.0.0",
+    "main": "VuFeedback.vue",
+    "repository": "https://github.com/sensedeep/vu-feedback.git"
+}

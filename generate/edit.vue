@@ -1,8 +1,9 @@
 <template>
     <div class="${MODEL}-edit">
         <h1>{{id ? "Edit" : "Create"}} ${UMODEL}</h1>
-        <v-form name="${UMODEL}Form">
+        <v-form name="${UMODEL}Form" ref="form">
             <v-sheet elevation="4" max-width="600" class="mt-4 pa-4">
+                <v-row><v-col class="pt-0"><vu-validate ref="validate" /></v-col></v-row>
                 <v-row>
                     <v-col>
                         <vu-input-group v-model="${MODEL}" :schema="schema"></vu-input-group>
@@ -41,8 +42,21 @@ export default class ${UMODEL}Edit extends Vue {
     }
 
     async save() {
-        await ${UMODEL}.update(this.${MODEL})
-        this.navigate('/${MODEL}')
+        let validate = this.$refs.validate
+        /*
+            This will first validate the form using client side rules defined in VuValidate.Rules
+         */
+        if (await validate.form(this)) {
+            try {
+                await ${UMODEL}.update(this.${MODEL})
+                this.navigate('/${MODEL}')
+            } catch (err) {
+                /*
+                    If server side update failed, then examine why and apply field level errors to the form
+                 */
+                await validate.exception(this, err)
+            }
+        }
     }
 
     async remove() {

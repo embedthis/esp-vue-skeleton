@@ -13,11 +13,14 @@
         }
     ],
     "dependencies": {
-        "js-polyfill": "~1",
-        "js-net": "~1",
-        "js-rest": "~1",
+        "js-error": "~1",
         "js-json": "~1",
-        "vu-input-group": "~1"
+        "js-net": "~1",
+        "js-polyfill": "~1",
+        "js-rest": "~1",
+        "vu-feedback": "~1.0",
+        "vu-input-group": "~1",
+        "vu-validate": "~1"
     },
     "devDependencies": {
         "pak": ">=1.0.0"
@@ -70,7 +73,7 @@
     ],
     "scripts": {
         "install": {
-            "run": "[ ! -x paks/esp-vue-skeleton ] && (esp generate module ; make configure build >/dev/tty 2>&1) ; true"
+            "run": "[ ! -f app.c ] && (esp generate module ; make configure build >/dev/tty 2>&1) ; true"
         }
     },
     "profile": "dev"

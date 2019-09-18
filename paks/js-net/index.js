@@ -30,11 +30,12 @@
  */
 
 import Json from 'js-json'
+import {NetError} from 'js-error'
 
 export default class Net {
 
-    static setConfig(config, notify) {
-        Net.config = config || {}
+    static setConfig(notify, config = {}) {
+        Net.config = config
         this.notify = notify
     }
 
@@ -140,7 +141,7 @@ export default class Net {
 
         if (resp.error && options.log !== false) {
             resp.message = resp.message || (resp.feedback || {}).error
-            if (resp.response.status != 401) {
+            if (status != 401) {
                 console.log(resp.message)
             }
         }
@@ -151,10 +152,8 @@ export default class Net {
         if (resp.error && options.throw !== false) {
             if (resp.response.status == 401) {
                 this.callback('login')
-                //  MOB - throw here?
-                throw resp.message
             }
-            throw new Error(resp.message || 'Cannot complete operation')
+            throw new NetError(resp.message || 'Cannot complete operation', resp)
         }
         if (options.raw === true) {
             return resp
