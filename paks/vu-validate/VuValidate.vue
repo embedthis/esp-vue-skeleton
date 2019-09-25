@@ -116,7 +116,7 @@ class VuValidate extends Vue {
                     input.errorBucket.push(value)
                 }
             }
-            await this.delay(1)
+            await app.delay(1)
         } else {
             this.error(err.message)
         }
@@ -143,10 +143,10 @@ class VuValidate extends Vue {
         if (rules) {
             component.rules = rules
         }
-        // await this.delay(1)
+        // await app.delay(1)
         let refs = component.$refs
-        if (refs.validate && refs.form) {
-            if (!(await refs.validate.check(refs.form))) {
+        if (refs.validate) {
+            if (!(await refs.validate.check(component.$refs.form))) {
                 return false
             }
         }

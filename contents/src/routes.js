@@ -1,5 +1,5 @@
 /*
-    router.js -- Vue routes routes
+    routes.js -- Vue routes
  */
 import Home from './Home.vue'
 

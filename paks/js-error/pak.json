@@ -10,15 +10,11 @@
         "name": "Michael O'Brien",
         "email": "mob@emobrien.com"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sensedeep/js-error.git"
-    },
+    "repository": "https://github.com/sensedeep/js-error.git",
     "bugs": {
         "url": "http://github.com/sensedeep/js-error/issues"
     },
     "license": "UNLICENSED",
     "main": "index.js",
-    "export": "*.js",
     "origin": "sensedeep/js-error"
 }

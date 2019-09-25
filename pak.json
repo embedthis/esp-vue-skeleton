@@ -19,6 +19,7 @@
         "js-polyfill": "~1",
         "js-rest": "~1",
         "vu-feedback": "~1.0",
+        "vu-input": "~1.0",
         "vu-input-group": "~1",
         "vu-validate": "~1"
     },
@@ -73,7 +74,7 @@
     ],
     "scripts": {
         "install": {
-            "run": "[ ! -f app.c ] && (esp generate module ; make configure build >/dev/tty 2>&1) ; true"
+            "run": "if [ ! -f app.c -a ! -f src/app.c ] ; then esp generate module ; make configure build >/dev/tty 2>&1 ; fi"
         }
     },
     "profile": "dev"

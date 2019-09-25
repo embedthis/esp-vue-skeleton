@@ -150,7 +150,7 @@ export default class Net {
         }
 
         if (resp.error && options.throw !== false) {
-            if (resp.response.status == 401) {
+            if (status == 401) {
                 this.callback('login')
             }
             throw new NetError(resp.message || 'Cannot complete operation', resp)

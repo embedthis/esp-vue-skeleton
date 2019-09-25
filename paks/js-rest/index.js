@@ -8,7 +8,7 @@
     })
 
     APIs can have properties drawn from the js-net options. {
-        base        Base url to use instead of the config.url.prefix
+        base        Base url to use instead of the config.prefix
         clear       Clear prior feedback
         feedback    If false, never emit feedback. If true, emit feedback on success. Otherwise on errors.
         body        Post body data

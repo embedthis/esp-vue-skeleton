@@ -17,13 +17,14 @@ export default class VuFeedback extends Vue {
     feedback = {}
     severityStyle = null
 
+    constructor() {
+        super()
+        app.define({feedback: this})
+    }
+
     away() {
         this.clear()
         return true
-    }
-
-    mounted() {
-        Vue.prototype.$feedback = this
     }
 
     clear() {

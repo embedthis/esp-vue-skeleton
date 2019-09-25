@@ -1,7 +1,7 @@
 {
     "esp": {
         "app": {
-            "source": ["app.c"]
+            "?source": ["app.c"]
         },
         "generate": {
             "?appweb": "esp-vue-skeleton/generate/appweb.conf",

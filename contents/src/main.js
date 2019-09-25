@@ -73,7 +73,7 @@ function netCallback(reason, args) {
         this.navigate('/auth/login')
 
     } else if (reason == 'logout') {
-        this.store.dispatch('logout')
+        app.action('auth.logout')
 
     } else if (reason == 'start') {
         progress.start()

@@ -18,14 +18,16 @@
                 <li>
                     <b><a href="https://embedthis.com/esp/doc/users/controllers.html">Generate
                     Controllers</a></b>
-                    <p>Create controllers to manage your app. Run <a href="https://embedthis.com/esp/doc/users/program.html"><b>esp</b></a> with no options to see its usage.</p>
-                    <pre>esp generate controller NAME [action, ...]</pre>
+                    <p>Create controllers to manage your app. Run <a href="https://embedthis.com/esp/doc/users/program.html"><b>esp</b></a> with no options to see its usage.
+                        <pre>esp generate controller NAME [action, ...]</pre>
+                    </p>
                 </li>
                 <li>
                     <b><a href="https://embedthis.com/esp/doc/users/program.html#scaffolds">Generate
                     Scaffolds</a></b>
-                    <p>Create entire scaffolds for large sections of your application.</p>
-                    <pre>esp generate scaffold NAME [field:type, ...]</pre>
+                    <p>Create entire scaffolds for large sections of your application.
+                        <pre>esp generate scaffold NAME [field:type, ...]</pre>
+                    </p>
                 </li>
 
                 <li><b><a href="https://embedthis.com/esp/doc/">Read the Documentation</a></b>
@@ -50,17 +52,11 @@
 </template>
 
 <script>
-// import HelloWorld from '@/components/HelloWorld.vue'
-
-export default {
-    name: 'home',
-    components: {
-        // HelloWorld
-    },
-    methods: {
-        mounted() {
-            console.log('here');
-        }
-    },
-}
+export default {name: 'home'}
 </script>
+
+<style lang="scss">
+pre {
+    padding: 10px 0 10px 0;
+}
+</style>

@@ -5,7 +5,7 @@
 -->
 <template>
     <div class="vu-input-group">
-        <vu-input v-for="item in items" :key="item.name" :dataType="item.dataType" :name="item.name" :label="item.label" v-model="value[item.name]" :rules="rules[item.name]" />
+        <vu-input v-for="item in items" :key="item.name" :dataType="item.dataType" :name="item.name" :label="item.label" v-model="value[item.name]" :rules="rules[item.name] || rules.required" />
     </div>
 </template>
 

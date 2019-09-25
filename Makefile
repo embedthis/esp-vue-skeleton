@@ -4,7 +4,6 @@
 #	make configure		# First time configuration
 # 	make [run]			# Run Appweb serving the client application and the backend API (combined)
 #
-#
 
 PATH 	 := $(PWD)/ui/node_modules/.bin:$(PATH)
 
