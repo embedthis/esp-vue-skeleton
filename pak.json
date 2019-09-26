@@ -13,15 +13,15 @@
         }
     ],
     "dependencies": {
-        "js-error": "~1",
-        "js-json": "~1",
-        "js-net": "~1",
-        "js-polyfill": "~1",
-        "js-rest": "~1",
-        "vu-feedback": "~1.0",
-        "vu-input": "~1.0",
-        "vu-input-group": "~1",
-        "vu-validate": "~1"
+        "sensedeep/js-error": "~1",
+        "sensedeep/js-json": "~1",
+        "sensedeep/js-net": "~1",
+        "sensedeep/js-polyfill": "~1",
+        "sensedeep/js-rest": "~1",
+        "sensedeep/vu-feedback": "~1",
+        "sensedeep/vu-input": "~1",
+        "sensedeep/vu-input-group": "~1",
+        "sensedeep/vu-validate": "~1"
     },
     "devDependencies": {
         "pak": ">=1.0.0"

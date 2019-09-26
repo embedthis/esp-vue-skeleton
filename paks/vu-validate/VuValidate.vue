@@ -143,10 +143,9 @@ class VuValidate extends Vue {
         if (rules) {
             component.rules = rules
         }
-        // await app.delay(1)
         let refs = component.$refs
-        if (refs.validate) {
-            if (!(await refs.validate.check(component.$refs.form))) {
+        if (refs.validate && refs.form) {
+            if (!(await refs.validate.check(refs.form))) {
                 return false
             }
         }

@@ -17,7 +17,16 @@
     "bugs": {
         "url": "http://github.com/sensedeep/js-polyfill/issues"
     },
-    "license": "UNLICENSED",
+    "licenses": [
+        {
+            "type": "GPL",
+            "url": "http://www.gnu.org/licenses/gpl-2.0.html"
+        },
+        {
+            "type": "Commercial",
+            "url": "https://embedthis.com/licensing/"
+        }
+    ],
     "main": "index.js",
     "origin": "sensedeep/js-polyfill"
 }

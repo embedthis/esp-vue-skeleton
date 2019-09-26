@@ -2,7 +2,16 @@
     "name": "js-net",
     "version": "1.0.0",
     "repository": "https://github.com/sensedeep/js-net.git",
-    "license": "UNLICENSED",
+    "licenses": [
+        {
+            "type": "GPL",
+            "url": "http://www.gnu.org/licenses/gpl-2.0.html"
+        },
+        {
+            "type": "Commercial",
+            "url": "https://embedthis.com/licensing/"
+        }
+    ],
     "main": "index.js",
     "origin": "sensedeep/js-net"
 }
