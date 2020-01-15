@@ -1,8 +1,5 @@
 <template>
-    <v-card v-if="errors.length" outlined color="grey lighten-3" class="validate">
-        <!--
-        <v-card-title class="headline error" primary-title>Form Errors</v-card-title>
-        -->
+    <v-card v-if="errors.length" outlined class="validate">
         <v-card-text>
             <h3>Please correct the following errors</h3>
             <ul>
@@ -28,13 +25,25 @@ const Rules = {
         v => !!v || 'Missing cloud name',
         v => /^[^<>~`!@#$%^&\*(){}\[\]|\\\/:;,?=+]+$/.test(v) || 'Bad format for cloud name',
     ],
+    domain: [
+        v => !!v || 'Missing domain',
+        v => /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(v) || 'Bad format for domain',
+    ],
     email: [
         v => !!v || 'Missing email',
-        v => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'Bad format for email address',
+        v => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(v) || 'Bad format for email address',
     ],
-    group: [
-        v => !!v || 'Missing log group name',
-        v => /^[a-zA-Z0-9_\-/\.]+/.test(v) || 'Bad format for log group name',
+    ipv4: [
+        v => !!v || 'Missing IP address',
+        v => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(v) || 'Bad format for IP address',
+    ],
+    ipv6: [
+        v => !!v || 'Missing IPv6 address',
+        v => /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/.test(v) || 'Bad format for IPv6 address',
+    ],
+    log: [
+        v => !!v || 'Missing log name',
+        v => /^[a-zA-Z0-9_\-/\.]+/.test(v) || 'Bad format for log name',
     ],
     name: [
         v => !!v || 'Missing name',
@@ -42,7 +51,7 @@ const Rules = {
     ],
     password: [
         v => !!v || 'Missing password',
-        v => (v && v.length >= 8) || 'Password must be at least 8 characters',
+        v => (v && v.length >= 8 && /[A-Z]+/.test(v) && /[a-z]+/.test(v) && /[0-9]+/.test(v) && /[!@#$%^&*(),.?":{}|<>]/.test(v) ) || 'Password must be at least 8 characters, have upper, lower, numeric and special characters',
     ],
     pollPeriod: [
         v => !!v || 'Missing poll period',
@@ -53,7 +62,7 @@ const Rules = {
         v => /^[\w]+-[\w]+-[\w]+$/.test(v) || 'Bad format for cloud region'
     ],
     required: [
-        v => !!v || 'Missing field'
+        v => !!v || 'Missing required field'
     ],
     resource: [
         v => !!v || 'Missing resource',
@@ -74,17 +83,25 @@ class VuValidate extends Vue {
     errors = []
     rules = Rules
 
-    //  MOB - can we start using schema with data types?
+    constructor() {
+        super()
+        this.rules = Rules
+    }
+
     /*
         Validate a form and calculate errors to aggregate and display
      */
-    async check(form, obj, schema) {
+    async check(form) {
         this.errors = []
         if (!form.validate()) {
             this.showErrors(form)
             return false
         }
         return true
+    }
+
+    clear() {
+        this.errors = []
     }
 
     /*
@@ -98,6 +115,19 @@ class VuValidate extends Vue {
         }
     }
 
+    async fieldError(component, field, message) {
+        let form = component.$refs.form
+        if (form) {
+            let inputs = form.inputs
+            let input = inputs.find(i => i.$attrs.name == field)
+            if (input) {
+                input.errorBucket.push(message)
+            }
+            await app.delay(1)
+        }
+        this.showErrors(form)
+    }
+
     get hasErrors() {
         return this.errors.length > 0
     }
@@ -106,9 +136,9 @@ class VuValidate extends Vue {
         Apply field errors from an exception which may contain a js-net response in details.
      */
     async exception(component, err) {
+        let form = component.$refs.form
         if (err.details) {
             let fieldErrors = err.details.fieldErrors || {}
-            let form = component.$refs.form
             let inputs = form.inputs
             for (let [field,value] of Object.entries(fieldErrors)) {
                 let input = inputs.find(i => i.$attrs.name == field)
@@ -139,18 +169,16 @@ class VuValidate extends Vue {
         Validate a form and get user confirmation confirm.
         Caller can define vu-validate and vu-confirm with refs.
      */
-    async form(component, rules) {
-        if (rules) {
-            component.rules = rules
-        }
+    async form(component, options = {}) {
         let refs = component.$refs
         if (refs.validate && refs.form) {
             if (!(await refs.validate.check(refs.form))) {
                 return false
             }
         }
-        if (refs.confirm) {
-            if (!(await refs.confirm.ask(`Do you want to save changes?`, "Save Changes"))) {
+        if (options.confirm && refs.confirm) {
+            let message = options.confirm || 'Do you want to make changes?'
+            if (!(await refs.confirm.ask(message, {title: "Save Changes"}))) {
                 return false
             }
         }
@@ -162,12 +190,21 @@ VuValidate.Rules = Rules
 
 export default VuValidate
 
-
 </script>
 
 <style lang="scss" scoped>
+.validate {
+    background-color: var(--v-error-base) !important;
+    color: white !important;
+    border-radius: 0 !important;
+    padding-bottom: 14px;
+}
 h3 {
-    color: var(--v-error-base);
+    color: white;
     padding-bottom: 10px;
+}
+li {
+    color: white;
+    font-size: 12px;
 }
 </style>

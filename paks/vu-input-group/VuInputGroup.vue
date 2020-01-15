@@ -5,7 +5,14 @@
 -->
 <template>
     <div class="vu-input-group">
-        <vu-input v-for="item in items" :key="item.name" :dataType="item.dataType" :name="item.name" :label="item.label" v-model="value[item.name]" :rules="rules[item.name] || rules.required" />
+        <vu-input v-for="item in items" :key="item.name"
+            v-model="value[item.name]"
+            :dataType="item.dataType"
+            :name="item.name"
+            :label="item.label"
+            :disabled="item.disabled"
+            :rules="itemRules[item.name]"
+        />
     </div>
 </template>
 
@@ -23,10 +30,11 @@ export default class VuInputGroup extends Vue {
     @Prop() value
 
     items = []
+    itemRules = {}
 
     setup() {
         if (Array.isArray(this.fields)) {
-            this.items = this.fields
+            this.items = this.fields.slice(0)
 
         } else if (this.fields) {
             let fields = this.fields
@@ -70,10 +78,40 @@ export default class VuInputGroup extends Vue {
                 }
             }
         }
+        this.items = this.items.filter(i => !i.disabled)
+        this.makeRules()
     }
 
-    @Watch('value', {immediate: true})
+    makeRules() {
+        let itemRules = {}
+        for (let item of this.items) {
+            let rules
+            if (item.disabled) {
+                rules = []
+            } else if (item.required == false && (this.value[item.name] == null || this.value[item.name] == '')) {
+                rules = []
+            } else {
+                rules = this.rules[item.rule || item.name] || []
+            }
+            itemRules[item.name] = rules
+        }
+        if (JSON.stringify(itemRules) != JSON.stringify(this.itemRules)) {
+            this.itemRules = itemRules
+        }
+    }
+
+    @Watch('value', {deep: true})
     valueChanged() {
+        this.makeRules()
+    }
+
+    @Watch('fields', {deep: true, immediate: true})
+    fieldsChanged() {
+        this.setup()
+    }
+
+    @Watch('schema')
+    schemaChanged() {
         this.setup()
     }
 }

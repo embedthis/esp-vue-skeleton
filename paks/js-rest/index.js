@@ -1,10 +1,10 @@
 /*
-    Rest.js -
+    Rest.js - REST API supports
 
     export default new Rest('user', {
-        check: { method: 'POST', uri: ':controller/check', ... },
-        login: { method: 'POST', uri: ':controller/login' },
-        logout: { method: 'POST', uri: ':controller/logout' },
+        check: { method: 'POST', uri: '/:controller/check', getMap: fn },
+        login: { method: 'POST', uri: '/:controller/login', nomap: true },
+        logout: { method: 'POST', uri: '/:controller/logout' },
     })
 
     APIs can have properties drawn from the js-net options. {
@@ -12,11 +12,14 @@
         clear       Clear prior feedback
         feedback    If false, never emit feedback. If true, emit feedback on success. Otherwise on errors.
         body        Post body data
+        getMap      Invoke getMap function to map data before returning
         log         Set to true to trace the request and response
         method      HTTP method
+        nomap       Do not use global map functions
         nologout    Don't logout if response is 401
         noparse     Don't json parse any JSON response
         progress    If true, show progress bar.
+        putMap      Invoke putMap function to map data before saving
         raw         If true, return the full response object (see below). If false, return just the data.
         throw       If false, do not throw on errors
     }
@@ -24,146 +27,163 @@
     Callers then invoke as:
 
     import Model from '@/models/Model'
+    Model.method(fields, options)
 
-    Model.action(fields, options)
-    Model.get({id: 2})
-    Model.find(null, {raw: true})
-    Model.find(null, {feedback: false, progress: true, method: 'DELETE', log: true})
+    Options:
+        offset      Starting offset for first row
+        limit       Limit of rows to return
+        filter      Filter pattern to apply to results
 
-    MOB - should we have auth abilities in the apis?  Controller will enforce anyway?
+    Additional Fetch options:
+        clear       Clear prior feedback
+        feedback    If false, never emit feedback. If true, emit feedback on success. Otherwise on errors.
+        body        Post body data
+        log         Set to true to trace the request and response
+        method      HTTP method
+        nologout    Don't logout if response is 401
+        noparse     Don't json parse any JSON response
+        noprefix    Don't prefix the URL. Use the window.location host address.
+        progress    If true, show progress bar.
+        raw         If true, return the full response object (see below). If false, return just the data.
+        throw       If false, do not throw on errors
  */
+
+import Net from 'js-net'
+import Clone from 'js-clone'
+import Blend from 'js-blend'
+import UUID from 'js-uuid'
 
 /*
-    SPA Route Table
-
-    Path                                     Methods          Action
-    ----                                     -------          ------
-    ^/{controller}$                          GET,OPTIONS      $1
-    ^/{controller}/{id=[0-9]+}/delete$       POST,OPTIONS     $1/delete
-    ^/{controller}(/)*$                      POST,OPTIONS     $1/create
-    ^/{controller}/{id=[0-9]+}/edit$         GET,OPTIONS      $1/edit
-    ^/{controller}/{id=[0-9]+}               GET,OPTIONS      $1/get
-    ^/{controller}/{id=[0-9]+}/get$          POST,OPTIONS     $1/getp
-    ^/{controller}/init$                     GET,OPTIONS      $1/init
-    ^/{controller}/list$                     POST,OPTIONS     $1/list
-    ^/{controller}/stream                    GET,OPTIONS      $1/stream
-    ^/{controller}/{id=[0-9]+}$              DELETE,OPTIONS   $1/remove
-    ^/{controller}/{id=[0-9]+}$              POST,OPTIONS     $1/update
-    ^/{controller}/{id=[0-9]+}/{action}(/)*$ GET,POST,OPTIONS $1/$3
-    ^/{controller}/{action}(/)*$             GET,POST,OPTIONS $1/$2
-    ^/{controller}/stream                    GET,POST         $&
-    ^/                                       GET,POST         $&
-    ^.*$                                     GET,POST         $&
-
-    These client restful APIs below map onto the ESP routes
+    Default routes
  */
-import Net from 'js-net'
-
 const GroupRest = {
-    create: { method: 'POST',   uri: ':controller' },
-    get:    { method: 'GET',    uri: ':controller/:id' },
-    init:   { method: 'GET',    uri: ':controller/init' },
-    list:   { method: 'POST',   uri: ':controller/list' },
-    remove: { method: 'DELETE', uri: ':controller/:id' },
-    update: { method: 'POST',   uri: ':controller/:id' },
+    create: { method: 'POST',  uri: '/:controller/create' },
+    get:    { method: 'POST',  uri: '/:controller/get' },
+    init:   { method: 'POST',  uri: '/:controller/init' },
+    find:   { method: 'POST',  uri: '/:controller/find' },
+    remove: { method: 'POST',  uri: '/:controller/remove', nomap: true },
+    update: { method: 'POST',  uri: '/:controller/update' },
 }
 
 const SingletonRest = {
-    create: { method: 'POST',   uri: ':controller' },
-    get:    { method: 'GET',    uri: ':controller/get' },
-    init:   { method: 'GET',    uri: ':controller/init' },
-    remove: { method: 'DELETE', uri: ':controller' },
-    update: { method: 'POST',   uri: ':controller/update' },
+    create: { method: 'POST',  uri: '/:controller/create' },
+    get:    { method: 'POST',  uri: '/:controller/get' },
+    init:   { method: 'POST',  uri: '/:controller/init' },
+    remove: { method: 'POST',  uri: '/:controller/remove', nomap: true },
+    update: { method: 'POST',  uri: '/:controller/update' },
 }
 
 export default class Rest {
-    constructor(name, apis, modifiers = {group: true}) {
-        this.net = new Net
-        this.name = name
-        this.apis = Object.assign({}, apis)
-        let extraAPIs = modifiers.group ? GroupRest : SingletonRest
-        this.apis = Object.assign(this.apis, extraAPIs)
+    /*
+        WARNING: API keys become top-level instance properties
+     */
+    constructor(name, customApis = {}, modifiers = {group: true}) {
+        this._net = new Net
+        this._name = name
+        this._model = toTitle(name)
+        this._clientId = UUID()
+        modifiers = this.modifiers = Object.assign({}, modifiers)
+        let base
+        if (modifiers.base == 'singleton') {
+            base = SingletonRest
+        } else if (modifiers.base != 'none') {
+            base = GroupRest
+        }
+        this._apis = Blend(Clone(base), customApis)
 
-        for (let [key,api] of Object.entries(this.apis)) {
-            /*
-                Params
-                    get({id: ID})
-                    list(null, options)
-
-                Options:
-                    offset      Starting offset for first row
-                    limit       Limit of rows to return
-                    filter      Filter pattern to apply to results
-
-
-                Additional Fetch options:
-                    clear       Clear prior feedback
-                    feedback    If false, never emit feedback. If true, emit feedback on success. Otherwise on errors.
-                    body        Post body data
-                    log         Set to true to trace the request and response
-                    method      HTTP method
-                    nologout    Don't logout if response is 401
-                    noparse     Don't json parse any JSON response
-                    noprefix    Don't prefix the URL. Use the window.location host address.
-                    progress    If true, show progress bar.
-                    raw         If true, return the full response object (see below). If false, return just the data.
-                    throw       If false, do not throw on errors
-             */
-            this[key] = async function(fields, options = {}) {
-                /*
-                    Replace the route :NAME fields with param values
-                 */
-                let uri = api.uri.replace(/:\w*/g, function(match, lead, tail) {
-                    let key = match.slice(1)
-                    if (key == 'controller') {
-                        return name
-                    }
-                    return (fields && fields[key]) ? fields[key] : ''
-                })
-
-                let args = Object.assign(Object.assign({}, api), options)
-/*
-                if (api.abilities && !this.$auth.can(api.abilities)) {
-                    this.$feedback.error('Unauthorized')
-                    this.navigate('/')
-                    throw new Error('Unauthorized')
+        for (let [action,api] of Object.entries(this._apis)) {
+            if (typeof api == 'function') {
+                this[action] = api
+            } else {
+                api.action = action
+                this[action] = this.createAction(api, action)
+            }
+            if ((modifiers.getMap || modifiers.putMap) && !customApis[action]) {
+                if (api.getMap === undefined && !api.nomap) {
+                    api.getMap = modifiers.getMap
                 }
-*/
-                let body = {}
-                if (fields) {
-                    for (let [field,value] of Object.entries(fields)) {
-                        if (value != null) {
-//MOB-ZZ test if encoding in fields
-                            body.fields = body.fields || {}
-                            body.fields[field] = value
-                        }
-                    }
+                if (api.putMap === undefined && !api.nomap) {
+                    api.putMap = modifiers.putMap
                 }
-                if (options.offset || options.limit || options.filter) {
-//MOB-ZZ
-                    body.options = Object.white(options, ['offset', 'limit', 'filter'])
+                if (api.context === undefined) {
+                    api.context = modifiers.context
                 }
-                if (Object.keys(body).length > 0) {
-                    if (args.method != 'POST') {
-//MOB-ZZ remove this
-                        body._encoded_json_ = true;
-                    }
-                    body = JSON.stringify(body)
-                    if (args.method == 'POST') {
-                        args.body = body
-                    } else {
-//MOB-ZZ remove this
-                        body = encodeURIComponent(body)
-                        let sep = (uri.indexOf('?') >= 0) ? '&' : '?'
-                        uri = `${uri}${sep}${body}`
-                    }
-                }
-                args.headers = Object.assign(args.headers || {}, {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                })
-                return await this.net.fetch(uri, args)
             }
         }
+    }
+
+    createAction(api, action) {
+        return async function(fields, options = {}) {
+            let {args, uri} = await this.prepRemote(api, fields, options)
+            let mark = new Date
+            let result = await this._net.fetch(uri, args)
+            let elapsed = (new Date() - mark) / 1000
+            if (result && api.getMap && !api.nomap) {
+                result = await api.getMap(result)
+            }
+            return result
+        }
+    }
+
+    async prepRemote(api, fields, options) {
+        /*
+            Replace the route :NAME fields with param values
+         */
+        let action = api.action
+        let name = this._name
+        let uri = api.uri.replace(/:\w*/g, function(match, lead, tail) {
+            let controller = match.slice(1)
+            if (controller == 'controller') {
+                return name.toLowerCase()
+            }
+            return (fields && fields[controller]) ? fields[controller] : ''
+        })
+        let args = Object.assign(Object.assign({}, api), options)
+        let body = {fields: {}}
+        if (fields) {
+            for (let [field,value] of Object.entries(fields)) {
+                if (value != null) {
+                    body.fields[field] = value
+                }
+            }
+            if (body.fields && api.putMap && !api.nomap) {
+                body.fields = await api.putMap(body.fields)
+            }
+        }
+        /*  MOB - should be done via a callback.
+        if (name != 'Table' && !body.fields.orgId && app.state.auth.orgId) {
+            body.fields.orgId = app.state.auth.orgId
+        } */
+        if (api.context) {
+            body.fields = api.context(body.fields)
+        }
+        if (app.state.app.logging) {
+            options.logging = options.logging || app.state.app.logging
+        }
+        options.clientId = this._clientId
+        body.options = Object.white(options, ['clientId', 'offset', 'limit', 'filter', 'logging'])
+
+        if (Object.keys(body).length > 0) {
+            if (args.method != 'POST') {
+                body._encoded_json_ = true;
+            }
+            body = JSON.stringify(body)
+            if (args.method == 'POST') {
+                args.body = body
+            } else {
+                let sep = (uri.indexOf('?') >= 0) ? '&' : '?'
+                body = encodeURIComponent(body)
+                uri = `${uri}${sep}${body}`
+            }
+        }
+        args.headers = Object.assign(args.headers || {}, {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        })
+        if (app.state.auth.tokens) {
+            args.headers.Authorization = app.state.auth.tokens.idToken.jwtToken
+        }
+        args.base = app.config.api
+        return {args, uri}
     }
 }

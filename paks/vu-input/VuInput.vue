@@ -21,8 +21,6 @@
         placeholder="Placeholder"
         rules="Validation rules"
 
-    //  MOB - could we pass in schema?
-
     Examples:
         options = {
             speed: {
@@ -143,7 +141,7 @@ const dataToRules = {
     string: {},
 }
 
-@Component({components: {}})
+@Component
 export default class VuInput extends Vue {
     @Prop({type: String}) auto
     @Prop({type: String, default: 'text'}) name
@@ -174,9 +172,10 @@ export default class VuInput extends Vue {
 
     @Watch('value', {immediate: true, deep: true})
     prep() {
+        /* Remove for modifying rules from VuInputGroup
         if (this.value == this.emit && this.displayType) {
             return
-        }
+        } */
         this.setup()
         let dataType = this.dataType ||  this.getType(this.value)
         this.displayType = this.type || dataToType[dataType]
@@ -203,6 +202,16 @@ export default class VuInput extends Vue {
                 this.reverseOptions['' + value] = key
             }
         }
+    }
+
+    @Watch('rules')
+    rulesChanged() {
+        this.prep()
+    }
+
+    @Watch('disabled')
+    fieldDisabled() {
+        this.prep()
     }
 
     getType(value) {
@@ -261,6 +270,12 @@ export default class VuInput extends Vue {
     }
     textarea {
         background: #F2F2F2;
+    }
+    label.v-label {
+        color: rgba(0, 0, 0, 0.80);
+    }
+    .v-label--is-disabled {
+        opacity: 0.5;
     }
 }
 </style>

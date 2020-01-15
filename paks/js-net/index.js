@@ -9,7 +9,6 @@
         method      HTTP method
         nologout    Don't logout if response is 401
         noparse     Don't json parse any JSON response
-        noprefix    Don't prefix the URL. Use the window.location host address.
         progress    If true, show progress bar.
         raw         If true, return the full response object (see below). If false, return just the data.
         throw       If false, do not throw on errors
@@ -44,7 +43,7 @@ export default class Net {
             timeouts: {
                 http: 30,
             },
-            prefix: ''
+            api: ''
         }, Net.config)
         this.notify = this.notify || Net.notify
     }
@@ -52,7 +51,7 @@ export default class Net {
     async callback(reason, args) {
         if (this.notify) {
             try {
-                this.notify(reason, args)
+                await this.notify(reason, args)
             } catch(e) {
                 print(e)
             }
@@ -62,19 +61,18 @@ export default class Net {
     async fetch(url, options = {}) {
         this.getConfig()
         if (options.clear) {
-            this.callback('clear')
+            await this.callback('clear')
         }
         if (!url.startsWith("http")) {
-            if (options.base) {
-                url = options.base + '/' + url
-            } else if (!options.nobase && this.config.prefix) {
-                url = this.config.prefix + '/' + url
+            let api = options.api || options.base || this.config.api || ''
+            if (api.indexOf('http') == 0) {
+                url = api + url
             } else {
-                url = location.origin + '/' + url
+                url = location.origin + api + url
             }
         }
         if (options.progress) {
-            this.callback('start')
+            await this.callback('start')
         }
         if (options.log) {
             log.trace('Fetch Request', {level: 0, options})
@@ -115,33 +113,35 @@ export default class Net {
                 }
             }
             resp.response = response
+
         } else {
+            resp.error = true
             status = 444
         }
 
         if (status == 401) {
             if (options.nologout !== true) {
-                this.callback('logout', resp)
+                await this.callback('logout', resp)
             }
         } else if (status != 200) {
             /* if (!(status == 0 && options.mode == 'no-cors')) */
             Object.assign(resp, {
                 error: true,
-                message: 'Could Not Communicate With Server',
+                message: 'Could not communicate with server',
                 severity: 'error',
             })
         }
 
         if (options.feedback !== false && (status != 200 || resp.error)) {
-            this.callback('feedback', resp)
+            await this.callback('feedback', resp)
         }
         if (options.progress) {
-            this.callback('stop')
+            await this.callback('stop')
         }
 
         if (resp.error && options.log !== false) {
             resp.message = resp.message || (resp.feedback || {}).error
-            if (status != 401) {
+            if (status != 401 && resp.message) {
                 console.log(resp.message)
             }
         }
@@ -150,10 +150,11 @@ export default class Net {
         }
 
         if (resp.error && options.throw !== false) {
-            if (status == 401) {
-                this.callback('login')
+            //  444 is a CORS error. Don't require login
+            if (status == 401 /* || status == 444 */) {
+                await this.callback('login')
             }
-            throw new NetError(resp.message || 'Cannot complete operation', resp)
+            throw new NetError((resp && resp.message) || 'Cannot complete operation', resp)
         }
         if (options.raw === true) {
             return resp
@@ -212,11 +213,13 @@ export default class Net {
         if (!args.method) {
             args.method = 'POST'
         }
-        let retries = options.retries || 1
+        let retries = options.retries || 0
         args.mode = args.mode || 'cors'
-        //  MOB - should this be universal or based on mode?
-        args.credentials = 'include'
-
+        if (args.credentials === false) {
+            args.credentials = undefined
+        } else {
+            args.credentials = args.credentials || 'include'
+        }
         let response
         let retry = 0
         do {

@@ -2,5 +2,15 @@
     "name": "vu-feedback",
     "version": "1.0.0",
     "main": "VuFeedback.vue",
-    "repository": "https://github.com/sensedeep/vu-feedback.git"
+    "repository": "https://github.com/sensedeep/vu-feedback.git",
+    "licenses": [
+        {
+            "type": "GPL",
+            "url": "http://www.gnu.org/licenses/gpl-2.0.html"
+        },
+        {
+            "type": "Commercial",
+            "url": "https://www.sensedeep.com/licensing/"
+        }
+    ]
 }

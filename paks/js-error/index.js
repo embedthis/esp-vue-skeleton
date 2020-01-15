@@ -3,7 +3,7 @@
  */
 
 function init(self, code, message, details) {
-    self.code = `PowerDown-${code}Error`
+    self.code = `${code}Error`
     self.name = self.constructor.name
     self.message = message
     self.details = details

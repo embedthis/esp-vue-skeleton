@@ -2,6 +2,9 @@
     js-polyfill.js -- Useful polyfills and globals (dump, loadJson, print, serialize)
  */
 
+import blend from 'js-blend'
+import clone from 'js-clone'
+
 try {
     if (typeof global !== 'undefined') {
         ;
@@ -16,8 +19,16 @@ try {
 } catch (e) {}
 
 RegExp.prototype.toJSON = RegExp.prototype.toString
-global.dump = (...args) => { for (let item of args) print(JSON.stringify(item, null, 4)) }
-global.print = (...args) => console.log(...args)
+global.dump = (...args) => {
+    let s = []
+    for (let item of args) {
+        s.push(JSON.stringify(item, null, 4))
+    }
+    print(s.join(' '))
+}
+global.print = (...args) => {
+    console.log(...args)
+}
 global.serialize = (o, pretty = false) => JSON.stringify(o, null, pretty ? 4 : 0)
 global.toTitle = (s) => (s ? (s[0].toUpperCase() + s.slice(1)) : '')
 global.zpad = (n, size) => {
@@ -25,11 +36,18 @@ global.zpad = (n, size) => {
     while (s.length < size) s = "0" + s
     return s
 }
-global.makeArray = (a) => ((a && !Array.isArray(a)) ? [a] : a)
+global.makeArray = (a) => {
+    if (a != null) {
+        if (Array.isArray(a)) {
+            return a
+        }
+        return [a]
+    }
+    return []
+}
 global.assert = (a) => {
     if (!(a)) {
-        log.exception(`Assertion failed`, new Error('Assertion'), {bug: true})
-        // throw new Error(`Assertion failed`, a)
+        console.log.exception(`Assertion failed`, new Error('Assertion'), {bug: true})
     }
 }
 const reduce = Function.bind.call(Function.call, Array.prototype.reduce)
@@ -128,7 +146,6 @@ Array.prototype.rotate = function(n) {
     return this
 }
 
-//  MOB - rename. Confusing vs Math.round
 Number.prototype.round = function (places = 12) {
     return parseFloat(this).toPrecision(places) - 0
 }
@@ -192,3 +209,6 @@ Object.black = function(obj, mask) {
     }
     return result
 }
+
+Object.blend = blend
+Object.clone = clone
